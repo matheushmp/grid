@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <iostream>
 #include "square.h"
+#include "piece.h"
 
 class glwindow : public QGLWidget
 {
@@ -32,6 +33,8 @@ public:
     float colorGp[3];
     int blueP[2];
     int greenP[2];
+    std::vector<Piece> pieces;
+
 
 
 private:
@@ -44,8 +47,9 @@ private:
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
-    void colorChange(int axisX, int axisY);
-
+    void colorChange(int *axis);
+    bool checkForBlue(int *position ,int *axis);
+    bool checkForMove(std::vector<std::pair<int,int>> moveList ,int *axis);
 
 
 

@@ -15,10 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         window.cpp \
     glwindow.cpp \
-    square.cpp
+    square.cpp \
+    piece.cpp
 
 HEADERS  += window.h \
     glwindow.h \
-    square.h
+    square.h \
+    piece.h
 
 FORMS    += window.ui

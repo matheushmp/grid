@@ -34,9 +34,13 @@ glwindow::glwindow(QWidget *parent) :
     }
     float colorV[3]={0.0f,0.0f,1.0f};
     squares[0][0].setColor(colorBp);
+    Piece p;
+    int position[2]={0,numH-1};
+    p.changePosition(position);
+    pieces.insert(pieces.begin(),p);
     squares[numW-1][0].setColor(colorGp);
-    colorChange(0,0);
-    colorChange(numW-1,0);
+    colorChange(blueP);
+    colorChange(greenP);
 }
 
 void glwindow::paintGL()
@@ -97,22 +101,19 @@ void glwindow::mousePressEvent(QMouseEvent *e)                       // M�todo
     _mousey = e->y();                                         // Captura Posi��o Y
     ex =  numW*sizeX*_mousex/we;
     ey =  numH*sizeY -numH*sizeY*_mousey/he;
-    int axisX=0;
-    int axisY=0;
+    int axis[2]={0,0};
     for(int i=0 ; i<numW ; i++){
         for(int j=0 ; j<numH ; j++){
             if(ex-i*sizeX>0 && ex-(i+1)*sizeX<0 && ey-j*sizeY>0 && ey-(j+1)*sizeY<0){
-                axisX=i;
-                axisY=j;
+                axis[0]=i;
+                axis[1]=j;
             }else{
                 float colorV[3]={0.6f,0.6f,0.6f};
                 squares[i][j].setColor(colorV);
             }
         }
     }
-    cout <<squares[axisX][axisY].getColor()[0]<< " "<<squares[axisX][axisY].getColor()[1]<< " "<<squares[axisX][axisY].getColor()[2]<< endl;
-
-    colorChange(axisX,axisY);
+    colorChange(axis);
     updateGL();
 
 }
@@ -137,56 +138,46 @@ void glwindow::mouseReleaseEvent(QMouseEvent *e)
     //    updateGL();
 }
 
-void glwindow::colorChange(int axisX, int axisY)
+void glwindow::colorChange(int *axis)
 {
-    if(squares[axisX][axisY].getColor()[0]==0.5 && squares[axisX][axisY].getColor()[1]==0.5 && squares[axisX][axisY].getColor()[2]==1){
-        blueP[0]=axisX;
-        blueP[1]=axisY;
-    }
-    float blue[3]={0.0f,0.0f,1.0f};
-    squares[blueP[0]][blueP[1]].setColor(blue);
-    if(blueP[0]-2>=0 && blueP[1]-1>=0){
-        squares[blueP[0]-2][blueP[1]-1].setColor(colorBp);
-    }
-    if(blueP[0]-2>=0 && blueP[1]+1<numH){
-        squares[blueP[0]-2][blueP[1]+1].setColor(colorBp);
-    }
-    if(blueP[0]-1>=0 && blueP[1]-2>=0){
-        squares[blueP[0]-1][blueP[1]-2].setColor(colorBp);
-    }
-    if(blueP[0]-1>=0 && blueP[1]+2<numH){
-        squares[blueP[0]-1][blueP[1]+2].setColor(colorBp);
-    }
-    if(blueP[0]+2<numW && blueP[1]-1>=0){
-        squares[blueP[0]+2][blueP[1]-1].setColor(colorBp);
-    }
-    if(blueP[0]+2<numW && blueP[1]+1<numH){
-        squares[blueP[0]+2][blueP[1]+1].setColor(colorBp);
-    }
-    if(blueP[0]+1<numW && blueP[1]-2>=0){
-        squares[blueP[0]+1][blueP[1]-2].setColor(colorBp);
-    }
-    if(blueP[0]+1<numW && blueP[1]+2<numH){
-        squares[blueP[0]+1][blueP[1]+2].setColor(colorBp);
-    }
-    if(squares[axisX][axisY].getColor()[0]==0.5 && squares[axisX][axisY].getColor()[1]==1 && squares[axisX][axisY].getColor()[2]==0.5){
-        greenP[0]=axisX;
-        greenP[1]=axisY;
+    std::vector<std::pair<int,int>> moveList;
+    moveList=pieces[0].checkMove(0,0,numW,numH);
+    Piece piece = pieces[0];
+    if(checkForMove(moveList,axis)){
+        piece.changePosition(axis);
+        pieces[0]=piece;
+        moveList=pieces[0].checkMove(0,0,numW,numH);
     }
     float green[3]={0.0f,1.0f,0.0f};
-    squares[greenP[0]][greenP[1]].setColor(green);
-    for(int pos=1 ; greenP[0]-pos>=0 && greenP[1]-pos>=0 ; pos++){
-        squares[greenP[0]-pos][greenP[1]-pos].setColor(colorGp);
+    squares[piece.checkPosition()[0]][piece.checkPosition()[1]].setColor(green);
+    for(int i=0 ; i<moveList.size() ; i++){
+        pair<int,int> p = moveList[i];
+        squares[p.first][p.second].setColor(colorGp);
     }
-    for(int pos=1 ; greenP[0]-pos>=0 && greenP[1]+pos<numH ; pos++){
-        squares[greenP[0]-pos][greenP[1]+pos].setColor(colorGp);
+}
+
+bool glwindow::checkForBlue(int *position, int *axis)
+{
+    if(position[0]-axis[0]==2 || axis[0]-position[0]==2){
+        if(position[1]-axis[1]==1 || axis[1]-position[1]==1){
+            return true;
+        }
+    }else if (position[0]-axis[0]==1 || axis[0]-position[0]==1){
+        if(position[1]-axis[1]==2 || axis[1]-position[1]==2){
+            return true;
+        }
     }
-    for(int pos=1 ; greenP[0]+pos<numW && greenP[1]-pos>=0 ; pos++){
-        squares[greenP[0]+pos][greenP[1]-pos].setColor(colorGp);
+    return false;
+}
+
+bool glwindow::checkForMove(vector<pair<int,int>> moveList, int *axis)
+{
+    for(int i=0 ; i<moveList.size() ; i++){
+        if(moveList[i].first==axis[0] && moveList[i].second==axis[1]){
+            return true;
+        }
     }
-    for(int pos=1 ; greenP[0]+pos<numW && greenP[1]+pos<numH ; pos++){
-        squares[greenP[0]+pos][greenP[1]+pos].setColor(colorGp);
-    }
+    return false;
 }
 
 
